@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>InterviewAI — Login</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<div class="auth-page">
+  <div class="auth-box">
+
+    <!-- BACK BUTTON -->
+    <a href="landing.html" style="display:inline-flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--text-faint);text-decoration:none;margin-bottom:20px;transition:color 0.2s;" onmouseover="this.style.color='var(--text-muted)'" onmouseout="this.style.color='var(--text-faint)'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to Home
+    </a>
+
+    <!-- LOGO -->
+    <div class="auth-logo">
+      <div class="auth-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div class="auth-logo-text">Interview<span>AI</span></div>
+    </div>
+
+    <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:24px;">
+      Practice. Improve. Get Hired.
+    </p>
+
+    <!-- TABS -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Login</button>
+      <button class="auth-tab" id="tabRegister" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <!-- ERROR -->
+    <div class="auth-error" id="authError"></div>
+
+    <!-- LOGIN FORM -->
+    <div id="loginForm" class="auth-form">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="loginEmail" placeholder="you@example.com"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="loginPassword" placeholder="••••••••"/>
+      </div>
+      <button class="btn btn-primary w-full btn-lg" id="loginBtn" onclick="doLogin()">
+        Login
+      </button>
+      <p class="auth-divider">Don't have an account? <a href="#" onclick="switchTab('register')">Register</a></p>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="registerForm" class="auth-form hidden">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" class="form-input" id="regName" placeholder="John Doe"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="regEmail" placeholder="you@example.com"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="regPassword" placeholder="Min 6 characters"/>
+      </div>
+      <button class="btn btn-primary w-full btn-lg" id="registerBtn" onclick="doRegister()">
+        Create Account
+      </button>
+      <p class="auth-divider">Already have an account? <a href="#" onclick="switchTab('login')">Login</a></p>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/auth.js"></script>
+<script>
+  // Tab switching
+  function switchTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('tabLogin').classList.toggle('active', isLogin);
+    document.getElementById('tabRegister').classList.toggle('active', !isLogin);
+    document.getElementById('loginForm').classList.toggle('hidden', !isLogin);
+    document.getElementById('registerForm').classList.toggle('hidden', isLogin);
+    document.getElementById('authError').classList.remove('show');
+  }
+
+  // Theme: apply saved preference
+  const saved = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+</script>
+</body>
+</html>
