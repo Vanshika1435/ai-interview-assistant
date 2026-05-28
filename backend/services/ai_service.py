@@ -1,28 +1,43 @@
 import httpx
 from backend.config import settings
 
-OLLAMA_OPTIONS = {
-    "num_predict": 250,
-    "temperature": 0.7,
-    "top_p": 0.9,
-    "repeat_penalty": 1.1,
-}
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODEL = "llama-3.3-70b-versatile"  # or "llama-3.1-8b-instant" for a faster/cheaper option # Llama 3 on Groq
 
 
-def ask_ollama(prompt: str) -> str:
+def ask_groq(prompt: str) -> str:
     try:
         response = httpx.post(
-            f"{settings.OLLAMA_BASE_URL}/api/generate",
-            json={
-                "model": "llama3",
-                "prompt": prompt,
-                "stream": False,
-                "options": OLLAMA_OPTIONS,
+            GROQ_API_URL,
+            headers={
+                "Authorization": f"Bearer {settings.GROQ_API_KEY}",
+                "Content-Type": "application/json",
             },
-            timeout=60.0,
+            json={
+                "model": GROQ_MODEL,
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": 500,
+                "temperature": 0.7,
+            },
+            timeout=30.0,
         )
+        if response.status_code != 200:
+            print(f"Groq API error: {response.status_code} - {response.text}")
+            return "AI_ERRORS"
         data = response.json()
-        return data.get("response", "").strip()
+        choices = data.get("choices")
+        if not choices or len(choices) == 0:
+            print(f"Groq API error: No choices in response - {data}")
+            return "AI_ERRORS"
+        message = choices[0].get("message")
+        if not message:
+            print(f"Groq API error: No content in message - {data}")
+            return "AI_ERRORS"
+        content = message.get("content")
+        if not content:
+            print(f"Groq API error: No content in message - {data}")
+            return "AI_ERRORS"
+        return content 
     except httpx.TimeoutException:
         return "AI_TIMEOUT"
     except Exception as e:
@@ -35,7 +50,6 @@ def generate_first_question(
     resume_skills: list = None,
     resume_level: str = None
 ) -> str:
-    # Resume-based interview takes highest priority
     if resume_skills and len(resume_skills) > 0:
         top_skills = ", ".join(resume_skills[:3])
         level = resume_level or "Mid"
@@ -54,7 +68,6 @@ def generate_first_question(
             "Output ONLY the question. No intro, no explanation."
         )
     else:
-        # Technical interview — topic-specific
         t = topic if topic else "general programming"
         topic_prompts = {
             "Python": "Python programming — focus on OOP, decorators, generators, async/await, or data structures",
@@ -71,9 +84,22 @@ def generate_first_question(
             "The question should test deep understanding, not just definitions. "
             "Output ONLY the question. No intro, no explanation, no extra text."
         )
-    return ask_ollama(prompt)
-
-
+    return ask_groq(prompt)
+    if result in ("AI_ERRORS", "AI_TIMEOUT") or not result.strip():
+        return _default_first_question(interview_type, topic)
+    return result 
+def _default_first_question(interview_type: str, topic: str = None) -> str:
+    if interview_type == "HR":
+        return "Tell me about yourself and your career journey."
+    topic_defaults = {
+        "Python": "What are Python decorators and how do they work?",
+        "JavaScript": "What is a closure in JavaScript and why is it useful?",
+        "DSA": "Explain the difference between a linked list and an array.",
+        "SQL": "What is an index in SQL and how does it improve query performance?",
+        "Machine Learning": "What is overfitting in machine learning and how can you prevent it?",
+        "System Design": "How would you design a URL shortening service like bit.ly?",
+    }
+    return topic_defaults.get(topic, "Describe a challenging technical problem you solved.")    
 def evaluate_answer(
     question: str,
     answer: str,
@@ -100,7 +126,7 @@ def evaluate_answer(
         f"NEXT_QUESTION: <one follow-up question on the same topic ({topic or interview_type})>"
     )
 
-    raw = ask_ollama(prompt)
+    raw = ask_groq(prompt)
     result = {
         "score": 5.0,
         "feedback": "Could not evaluate.",
@@ -154,7 +180,7 @@ def analyze_resume(text: str) -> dict:
         "ROADMAP: <3 specific learning steps separated by | character>\n\n"
         f"Resume:\n{text[:2000]}"
     )
-    raw = ask_ollama(prompt)
+    raw = ask_groq(prompt)
 
     sections = {
         "skills": [],
