@@ -13,3 +13,4 @@ pydantic[email]
 faster-whisper
 PyPDF2
 groq
+bcrypt==4.0.1
