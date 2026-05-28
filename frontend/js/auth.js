@@ -1,4 +1,4 @@
-const API = 'http://localhost:8000';
+const API = 'https://ai-interview-assistant-backend-v5hv.onrender.com';
 
 // Redirect if already logged in
 if (localStorage.getItem('token')) {

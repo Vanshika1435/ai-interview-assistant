@@ -141,8 +141,8 @@ ollama pull llama3
 uvicorn backend.main:app --reload
 ```
 
-API will be live at: `http://localhost:8000`  
-Swagger docs at: `http://localhost:8000/docs`
+API will be live at: `https://ai-interview-assistant-backend-v5hv.onrender.com`  
+Swagger docs at: `https://ai-interview-assistant-backend-v5hv.onrender.com`
 
 ### 8. Open the frontend
 

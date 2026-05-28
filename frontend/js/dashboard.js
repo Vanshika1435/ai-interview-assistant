@@ -1,4 +1,4 @@
-const API = 'http://localhost:8000';
+const API = 'https://ai-interview-assistant-backend-v5hv.onrender.com';
 const token = localStorage.getItem('token');
 if (!token) window.location.href = 'index.html';
 
