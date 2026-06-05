@@ -114,3 +114,17 @@ def get_admin_stats(email: str, password: str, db: Session = Depends(get_db)):
         "users": user_list,
         "sessions": session_list
     }
+@router.delete("/user/{user_id}")
+def delete_user(user_id: int, email: str, password: str, db: Session = Depends(get_db)):
+    verify_admin(email, password)
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    # Delete sessions and messages first
+    sessions = db.query(InterviewSession).filter(InterviewSession.user_id == user_id).all()
+    for s in sessions:
+        db.query(Message).filter(Message.session_id == s.id).delete()
+    db.query(InterviewSession).filter(InterviewSession.user_id == user_id).delete()
+    db.delete(user)
+    db.commit()
+    return {"success": True, "message": "User deleted"}

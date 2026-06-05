@@ -98,7 +98,9 @@ function renderUsersTable(users) {
       <td style="color:var(--text-muted)">${u.joined}</td>
       <td><span class="badge badge-muted">${u.sessions}</span></td>
       <td>${scoreBadge(u.avg_score)}</td>
-    </tr>`).join('');
+      <td>
+        <button onclick="deleteUser(${u.id})" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:5px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-weight:600;">Delete</button>
+      </td>`).join('');
 }
 
 function renderSessionsTable(sessions) {
@@ -137,4 +139,19 @@ function showToast(msg, type = 'info') {
   el.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${icons[type]}</svg>${msg}`;
   wrap.appendChild(el);
   setTimeout(() => el.remove(), 3500);
+}
+async function deleteUser(userId) {
+  if (!confirm('Are you sure? All user data will be deleted permanently.')) return;
+  try {
+    const res = await fetch(
+      `${API}/admin/user/${userId}?email=${encodeURIComponent(adminCreds.email)}&password=${encodeURIComponent(adminCreds.password)}`,
+      { method: 'DELETE' }
+    );
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail);
+    showToast('User deleted successfully', 'success');
+    loadStats(); // Refresh
+  } catch(e) {
+    showToast('Failed to delete user', 'error');
+  }
 }
