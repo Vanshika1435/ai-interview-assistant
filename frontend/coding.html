@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Technical Interview — InterviewAI</title>
+<link rel="stylesheet" href="css/style.css"/>
+<style>
+  body{margin:0;background:#050816;color:#e2e8f0;font-family:'Inter','Segoe UI',sans-serif;}
+  .coding-layout{display:grid;grid-template-columns:1fr 1fr;height:100vh;overflow:hidden;}
+  .problem-panel{border-right:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;overflow:hidden;}
+  .editor-panel{display:flex;flex-direction:column;overflow:hidden;}
+  .panel-header{padding:14px 20px;background:#0b1020;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+  .panel-title{font-size:13px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;}
+  .panel-body{flex:1;overflow-y:auto;padding:24px;}
+  .prob-title{font-size:20px;font-weight:800;color:#f8fafc;margin-bottom:10px;}
+  .diff-badge{padding:4px 12px;border-radius:99px;font-size:12px;font-weight:700;}
+  .diff-easy{background:rgba(34,197,94,0.15);color:#22c55e;}
+  .diff-medium{background:rgba(245,158,11,0.15);color:#f59e0b;}
+  .diff-hard{background:rgba(239,68,68,0.15);color:#ef4444;}
+  .prob-desc{font-size:14px;color:#cbd5e1;line-height:1.75;margin:16px 0;}
+  .prob-section{margin-bottom:16px;}
+  .prob-section-title{font-size:11px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;}
+  .prob-code{background:#111827;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 16px;font-family:monospace;font-size:13px;color:#a5f3fc;}
+  .hint-box{background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:14px 16px;font-size:13px;color:#a5b4fc;cursor:pointer;}
+  .lang-select{background:#1e293b;border:1px solid rgba(255,255,255,0.1);color:#e2e8f0;padding:6px 12px;border-radius:8px;font-size:13px;cursor:pointer;}
+  #codeEditor{flex:1;width:100%;background:#0a0f1e;border:none;outline:none;color:#e2e8f0;font-family:'Fira Code','Courier New',monospace;font-size:14px;padding:20px;resize:none;line-height:1.7;tab-size:4;}
+  .editor-footer{padding:12px 16px;background:#0b1020;border-top:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .result-panel{padding:16px 20px;background:#0b1020;border-top:1px solid rgba(255,255,255,0.08);max-height:240px;overflow-y:auto;flex-shrink:0;display:none;}
+  .result-row{display:flex;gap:10px;align-items:center;margin-bottom:8px;font-size:13px;}
+  .result-label{color:#94a3b8;font-weight:600;min-width:130px;}
+  .result-val{color:#f8fafc;}
+  .progress-dots{display:flex;gap:6px;margin-left:auto;}
+  .prob-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.1);}
+  .prob-dot.done{background:#22c55e;}
+  .prob-dot.active{background:#6366f1;}
+  @media(max-width:768px){.coding-layout{grid-template-columns:1fr;grid-template-rows:1fr 1fr;}}
+</style>
+</head>
+<body>
+<!-- TOP BAR -->
+<div style="height:52px;background:#070c1a;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;padding:0 20px;gap:14px;position:sticky;top:0;z-index:10;">
+  <a href="dashboard.html" style="color:#94a3b8;text-decoration:none;font-size:13px;display:flex;align-items:center;gap:6px;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    Dashboard
+  </a>
+  <span style="color:rgba(255,255,255,0.1);">|</span>
+  <span id="topbarTitle" style="font-size:13px;font-weight:700;color:#f8fafc;"></span>
+  <span id="topbarTopic" style="font-size:12px;color:#94a3b8;"></span>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+    <div id="scoreDisplay" style="font-size:13px;color:#94a3b8;">Score: <span id="runningScore" style="color:#34d399;font-weight:700;">0.0</span>/10</div>
+    <div class="progress-dots" id="progressDots"></div>
+    <button onclick="endCodingInterview()" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;">End Interview</button>
+  </div>
+</div>
+
+<div class="coding-layout" style="height:calc(100vh - 52px);">
+  <!-- LEFT: Problem -->
+  <div class="problem-panel">
+    <div class="panel-header">
+      <span class="panel-title">Problem</span>
+      <span id="probCounter" style="font-size:12px;color:#94a3b8;">1 / 5</span>
+    </div>
+    <div class="panel-body" id="problemBody">
+      <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#4b5563;">
+        <div style="text-align:center;">
+          <div style="font-size:32px;margin-bottom:12px;">⚙️</div>
+          Loading problem...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Editor + Result -->
+  <div class="editor-panel">
+    <div class="panel-header">
+      <span class="panel-title">Code Editor</span>
+      <select class="lang-select" id="langSelect">
+        <option value="python">Python</option>
+        <option value="javascript">JavaScript</option>
+        <option value="java">Java</option>
+        <option value="cpp">C++</option>
+      </select>
+    </div>
+    <textarea id="codeEditor" spellcheck="false" placeholder="# Write your solution here...&#10;&#10;def solution():&#10;    pass"></textarea>
+    <div class="editor-footer">
+      <button onclick="loadNextProblem()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#94a3b8;padding:8px 16px;border-radius:10px;font-size:13px;cursor:pointer;">Skip →</button>
+      <button id="submitBtn" onclick="submitSolution()" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;padding:10px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-left:auto;box-shadow:0 4px 16px rgba(99,102,241,0.35);">
+        ▶ Submit
+      </button>
+    </div>
+    <div class="result-panel" id="resultPanel"></div>
+  </div>
+</div>
+
+<script>
+const API = 'https://ai-interview-assistant-backend-v5hv.onrender.com';
+const token = localStorage.getItem('token');
+if (!token) window.location.href = 'index.html';
+
+const topic = localStorage.getItem('interview_topic') || 'DSA';
+const sessionId = parseInt(localStorage.getItem('session_id')) || null;
+const TOTAL_PROBLEMS = 5;
+
+let currentProblem = null;
+let currentIndex = 0;
+let scores = [];
+let submitted = [];
+
+document.getElementById('topbarTitle').textContent = 'Technical Interview';
+document.getElementById('topbarTopic').textContent = `· ${topic}`;
+initDots();
+loadNextProblem();
+
+function initDots() {
+  const dots = document.getElementById('progressDots');
+  dots.innerHTML = Array.from({length: TOTAL_PROBLEMS}, (_, i) =>
+    `<div class="prob-dot ${i === 0 ? 'active' : ''}" id="dot${i}"></div>`
+  ).join('');
+}
+
+function updateDots() {
+  for (let i = 0; i < TOTAL_PROBLEMS; i++) {
+    const d = document.getElementById(`dot${i}`);
+    if (!d) continue;
+    d.className = 'prob-dot' + (i < currentIndex ? ' done' : i === currentIndex ? ' active' : '');
+  }
+}
+
+function getDifficulty(index) {
+  if (index < 2) return 'Easy';
+  if (index < 4) return 'Medium';
+  return 'Hard';
+}
+
+async function loadNextProblem() {
+  if (currentIndex >= TOTAL_PROBLEMS) { endCodingInterview(); return; }
+  document.getElementById('problemBody').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#4b5563;">
+      <div style="text-align:center;"><div style="font-size:32px;margin-bottom:12px;">⚙️</div>Loading problem ${currentIndex+1}...</div>
+    </div>`;
+  document.getElementById('codeEditor').value = '';
+  document.getElementById('resultPanel').style.display = 'none';
+  document.getElementById('probCounter').textContent = `${currentIndex+1} / ${TOTAL_PROBLEMS}`;
+
+  try {
+    const level = getDifficulty(currentIndex);
+    const res = await fetch(`${API}/interview/coding-problem?topic=${encodeURIComponent(topic)}&level=${level}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    currentProblem = await res.json();
+    renderProblem(currentProblem);
+  } catch(e) {
+    document.getElementById('problemBody').innerHTML = '<p style="color:#ef4444;padding:20px;">Failed to load problem. Check connection.</p>';
+  }
+}
+
+function renderProblem(p) {
+  const diffClass = p.difficulty === 'Easy' ? 'diff-easy' : p.difficulty === 'Hard' ? 'diff-hard' : 'diff-medium';
+  document.getElementById('problemBody').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <span class="prob-title">${currentIndex+1}. ${p.title}</span>
+      <span class="diff-badge ${diffClass}">${p.difficulty}</span>
+    </div>
+    <div class="prob-desc">${p.description}</div>
+    ${p.example_input ? `<div class="prob-section">
+      <div class="prob-section-title">Example</div>
+      <div class="prob-code">Input: ${p.example_input}<br/>Output: ${p.example_output}</div>
+    </div>` : ''}
+    ${p.constraints ? `<div class="prob-section">
+      <div class="prob-section-title">Constraints</div>
+      <div style="font-size:13px;color:#94a3b8;">${p.constraints}</div>
+    </div>` : ''}
+    <div class="hint-box" onclick="this.innerHTML='💡 ${p.hint || 'Think about edge cases and time complexity.'}'">
+      💡 Click to reveal hint
+    </div>`;
+
+  const langDefaults = {
+    python: `def solution():\n    # Your code here\n    pass`,
+    javascript: `function solution() {\n    // Your code here\n}`,
+    java: `public class Solution {\n    public static void main(String[] args) {\n        // Your code here\n    }\n}`,
+    cpp: `#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Your code here\n    return 0;\n}`
+  };
+  document.getElementById('codeEditor').value = langDefaults[document.getElementById('langSelect').value] || '';
+}
+
+document.getElementById('langSelect').addEventListener('change', function() {
+  if (!currentProblem) return;
+  renderProblem(currentProblem);
+});
+
+async function submitSolution() {
+  const code = document.getElementById('codeEditor').value.trim();
+  if (!code || code.length < 10) { alert('Please write your solution first.'); return; }
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Evaluating...';
+
+  try {
+    const res = await fetch(`${API}/interview/evaluate-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        problem_title: currentProblem?.title || 'Coding Problem',
+        code, language: document.getElementById('langSelect').value,
+        topic
+      })
+    });
+    const result = await res.json();
+    scores.push(result.score);
+    submitted.push({ problem: currentProblem, code, result });
+    renderResult(result);
+    updateRunningScore();
+
+    btn.textContent = 'Next Problem →';
+    btn.disabled = false;
+    btn.onclick = () => { currentIndex++; updateDots(); loadNextProblem(); btn.onclick = submitSolution; };
+  } catch(e) {
+    btn.disabled = false; btn.textContent = '▶ Submit';
+    alert('Evaluation failed. Please try again.');
+  }
+}
+
+function renderResult(r) {
+  const panel = document.getElementById('resultPanel');
+  panel.style.display = 'block';
+  const correctColor = r.correctness === 'Correct' ? '#22c55e' : r.correctness === 'Partially Correct' ? '#f59e0b' : '#ef4444';
+  panel.innerHTML = `
+    <div style="font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">Evaluation Result</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:18px;font-weight:800;color:#818cf8;">${r.score}/10</div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">Score</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:13px;font-weight:700;color:${correctColor};">${r.correctness}</div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">Status</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:13px;font-weight:700;color:#a5f3fc;">${r.time_complexity}</div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">Time</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:13px;font-weight:700;color:#a5f3fc;">${r.space_complexity}</div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px;">Space</div>
+      </div>
+    </div>
+    <div style="font-size:13px;color:#cbd5e1;margin-bottom:8px;">${r.feedback}</div>
+    ${r.optimized_hint ? `<div style="font-size:12px;color:#94a3b8;font-style:italic;">💡 ${r.optimized_hint}</div>` : ''}`;
+}
+
+function updateRunningScore() {
+  const avg = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : '0.0';
+  document.getElementById('runningScore').textContent = avg;
+}
+
+async function endCodingInterview() {
+  if (sessionId) {
+    try {
+      await fetch(`${API}/interview/end/${sessionId}`, { method:'POST', headers:{ Authorization:`Bearer ${token}` } });
+    } catch(e) {}
+  }
+  localStorage.removeItem('session_id');
+  localStorage.removeItem('first_question');
+
+  const avg = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1) : '0.0';
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(8px);`;
+  overlay.innerHTML = `
+    <div style="background:#0f172a;border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:40px;text-align:center;max-width:460px;width:90%;box-shadow:0 24px 60px rgba(0,0,0,0.7);">
+      <div style="font-size:52px;margin-bottom:16px;">🏆</div>
+      <h2 style="font-size:22px;font-weight:800;color:#f8fafc;margin-bottom:8px;">Technical Round Complete!</h2>
+      <p style="color:#94a3b8;font-size:14px;margin-bottom:28px;">${submitted.length} of ${TOTAL_PROBLEMS} problems attempted</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;">
+        <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:18px;">
+          <div style="font-size:28px;font-weight:800;color:#34d399;">${avg}</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Average Score /10</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:18px;">
+          <div style="font-size:28px;font-weight:800;color:#818cf8;">${submitted.length}</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Problems Attempted</div>
+        </div>
+      </div>
+      <button onclick="window.location.href='dashboard.html'" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;">
+        Back to Dashboard
+      </button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+</script>
+</body>
+</html>

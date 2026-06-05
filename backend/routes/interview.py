@@ -10,6 +10,7 @@ from backend.services.interview_service import start_interview, send_answer, end
 from backend.services.auth_service import get_current_user, decode_access_token
 from backend.services.speech_service import transcribe_audio
 from pydantic import BaseModel
+from backend.services.ai_service import generate_coding_problem, evaluate_code_submission
 
 router = APIRouter(prefix="/interview", tags=["Interview"])
 
@@ -202,3 +203,13 @@ def get_sessions(
 
     except Exception as e:
         return []
+
+@router.get("/coding-problem")
+def get_coding_problem(topic: str = "DSA", level: str = "Medium", db: Session = Depends(get_db), token: str = Depends(get_token)):
+    get_current_user(token, db)
+    return generate_coding_problem(topic, level)
+
+@router.post("/evaluate-code")
+def evaluate_code(data: dict, db: Session = Depends(get_db), token: str = Depends(get_token)):
+    get_current_user(token, db)
+    return evaluate_code_submission(data.get("problem_title",""), data.get("code",""), data.get("language","python"), data.get("topic"))

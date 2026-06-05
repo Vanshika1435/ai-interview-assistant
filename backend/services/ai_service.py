@@ -88,6 +88,56 @@ def generate_first_question(
     if result in ("AI_ERRORS", "AI_TIMEOUT") or not result.strip():
         return _default_first_question(interview_type, topic)
     return result 
+
+def generate_coding_problem(topic: str = None, level: str = "Medium") -> dict:
+    t = topic or "DSA"
+    prompt = (
+        f"Generate a coding interview problem about {t}, difficulty: {level}.\n"
+        "Reply in EXACTLY this format:\n"
+        "TITLE: <problem title>\n"
+        "DIFFICULTY: <Easy/Medium/Hard>\n"
+        "DESCRIPTION: <clear problem statement, 2-4 sentences>\n"
+        "EXAMPLE_INPUT: <example input>\n"
+        "EXAMPLE_OUTPUT: <expected output>\n"
+        "CONSTRAINTS: <1-3 constraints>\n"
+        "HINT: <one subtle hint>\n"
+        "SOLUTION_APPROACH: <brief approach description, no full code>"
+    )
+    raw = ask_groq(prompt)
+    result = {"title": "Coding Problem", "difficulty": level, "description": "", "example_input": "", "example_output": "", "constraints": "", "hint": "", "solution_approach": ""}
+    for line in raw.split("\n"):
+        line = line.strip()
+        for key, prefix in [("title","TITLE:"),("difficulty","DIFFICULTY:"),("description","DESCRIPTION:"),("example_input","EXAMPLE_INPUT:"),("example_output","EXAMPLE_OUTPUT:"),("constraints","CONSTRAINTS:"),("hint","HINT:"),("solution_approach","SOLUTION_APPROACH:")]:
+            if line.startswith(prefix):
+                result[key] = line.replace(prefix,"").strip()
+    return result
+
+def evaluate_code_submission(problem_title: str, code: str, language: str, topic: str = None) -> dict:
+    prompt = (
+        f"Evaluate this code solution for: '{problem_title}'\n"
+        f"Language: {language}\n"
+        f"Code:\n{code}\n\n"
+        "Reply in EXACTLY this format:\n"
+        "SCORE: <1-10>\n"
+        "CORRECTNESS: <Correct/Partially Correct/Incorrect>\n"
+        "TIME_COMPLEXITY: <O(n) style>\n"
+        "SPACE_COMPLEXITY: <O(n) style>\n"
+        "FEEDBACK: <2-3 sentences on approach, edge cases, improvements>\n"
+        "OPTIMIZED_HINT: <one sentence on how to optimize if needed>"
+    )
+    raw = ask_groq(prompt)
+    result = {"score": 5.0, "correctness": "Unknown", "time_complexity": "Unknown", "space_complexity": "Unknown", "feedback": "", "optimized_hint": ""}
+    for line in raw.split("\n"):
+        line = line.strip()
+        if line.startswith("SCORE:"):
+            try: result["score"] = float(line.replace("SCORE:","").strip().split()[0])
+            except: pass
+        elif line.startswith("CORRECTNESS:"): result["correctness"] = line.replace("CORRECTNESS:","").strip()
+        elif line.startswith("TIME_COMPLEXITY:"): result["time_complexity"] = line.replace("TIME_COMPLEXITY:","").strip()
+        elif line.startswith("SPACE_COMPLEXITY:"): result["space_complexity"] = line.replace("SPACE_COMPLEXITY:","").strip()
+        elif line.startswith("FEEDBACK:"): result["feedback"] = line.replace("FEEDBACK:","").strip()
+        elif line.startswith("OPTIMIZED_HINT:"): result["optimized_hint"] = line.replace("OPTIMIZED_HINT:","").strip()
+    return result
 def _default_first_question(interview_type: str, topic: str = None) -> str:
     if interview_type == "HR":
         return "Tell me about yourself and your career journey."
@@ -177,6 +227,7 @@ def analyze_resume(text: str) -> dict:
         "SUGGESTED_TOPICS: <comma-separated best interview topics>\n"
         "STRENGTHS: <one sentence about key strengths>\n"
         "IMPROVEMENT_AREAS: <one sentence about gaps>\n"
+        "ATS_SCORE: <number 0-100 representing ATS compatibility>\n"
         "ROADMAP: <3 specific learning steps separated by | character>\n\n"
         f"Resume:\n{text[:2000]}"
     )
@@ -190,6 +241,7 @@ def analyze_resume(text: str) -> dict:
         "improvement_areas": "",
         "roadmap": [],
         "raw": raw,
+        "ats_score": 0,
     }
 
     for line in raw.split("\n"):
@@ -204,8 +256,12 @@ def analyze_resume(text: str) -> dict:
             sections["strengths"] = line.replace("STRENGTHS:", "").strip()
         elif line.startswith("IMPROVEMENT_AREAS:"):
             sections["improvement_areas"] = line.replace("IMPROVEMENT_AREAS:", "").strip()
+        elif line.startswith("ATS_SCORE:"):
+            try:
+                sections["ats_score"] = int(line.replace("ATS_SCORE:", "").strip().split()[0])
+            except:
+                sections["ats_score"] = 0
         elif line.startswith("ROADMAP:"):
             raw_roadmap = line.replace("ROADMAP:", "").strip()
             sections["roadmap"] = [s.strip() for s in raw_roadmap.split("|") if s.strip()]
-
     return sections

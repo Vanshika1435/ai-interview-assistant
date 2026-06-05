@@ -165,8 +165,7 @@ async function endInterview() {
     localStorage.removeItem('session_id')
     localStorage.removeItem('first_question')
 
-    alert(`Interview Complete!\nQuestions: ${questionCount}\nFinal Score: ${currentScore.toFixed(1)}/10`)
-    window.location.href = 'dashboard.html'
+    showCompletionModal(questionCount, currentScore);
 }
 
 // Start on page load
@@ -242,4 +241,28 @@ async function processVoiceToText() {
         removeTyping()
         addMessage('ai', 'Voice error. Please try again.')
     }
+}
+function showCompletionModal(questions, score) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(6px);`;
+    overlay.innerHTML = `
+      <div style="background:#0f172a;border:1px solid rgba(255,255,255,0.12);border-radius:24px;padding:40px 48px;text-align:center;max-width:420px;width:90%;box-shadow:0 24px 60px rgba(0,0,0,0.6);">
+        <div style="font-size:52px;margin-bottom:16px;">🎉</div>
+        <h2 style="font-size:22px;font-weight:800;color:#f8fafc;margin-bottom:8px;">Interview Complete!</h2>
+        <p style="color:#94a3b8;margin-bottom:28px;font-size:15px;">Great effort! Here's your summary.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px;">
+          <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:18px;">
+            <div style="font-size:28px;font-weight:800;color:#34d399;">${score.toFixed(1)}</div>
+            <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Final Score /10</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:18px;">
+            <div style="font-size:28px;font-weight:800;color:#818cf8;">${questions}</div>
+            <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Questions Answered</div>
+          </div>
+        </div>
+        <button onclick="window.location.href='dashboard.html'" style="width:100%;padding:14px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;">
+          Back to Dashboard
+        </button>
+      </div>`;
+    document.body.appendChild(overlay);
 }

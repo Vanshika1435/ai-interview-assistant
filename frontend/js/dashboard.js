@@ -136,7 +136,7 @@ function renderHistory(sessions) {
     const date = s.created_at ? new Date(s.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
     const label = type === 'HR' ? 'HR' : (s.topic || 'Technical');
     return `
-      <div class="history-item" onclick="window.location.href='interview.html?session=${s.id}'">
+      <div class="history-item" onclick="openSessionReview(${s.id})">
         <div class="history-dot ${type.toLowerCase()}"></div>
         <div class="history-info">
           <div class="history-title">${label} Interview</div>
@@ -172,7 +172,11 @@ async function startInterview() {
     localStorage.setItem("interview_topic", selectedType === "Technical" ? selectedTopic : "");
     localStorage.setItem("session_id", data.session_id);
     localStorage.setItem("first_question", data.first_question || "");
-    window.location.href = "interview.html";
+    if (selectedType === 'Technical') {
+      window.location.href = "coding.html";
+    } else {
+      window.location.href = "interview.html";
+    }
   } catch (e) {
     hideLoading();
     showToast('Could not start interview. Is the backend running?', 'error');
@@ -241,7 +245,8 @@ function renderResumeAnalysis(analysis) {
   // Strengths & improvement
   document.getElementById('analysisStrengths').textContent = analysis.strengths || '—';
   document.getElementById('analysisImprovement').textContent = analysis.improvement_areas || '—';
-
+  const atsEl = document.getElementById('analysisATS');
+  if (atsEl) atsEl.textContent = analysis.ats_score ?? '—';
   result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
@@ -275,4 +280,54 @@ function showToast(msg, type = 'info') {
   el.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${icons[type]}</svg>${msg}`;
   wrap.appendChild(el);
   setTimeout(() => el.remove(), 3500);
+}
+async function openSessionReview(sessionId) {
+  showLoading('Loading session...');
+  try {
+    const res = await fetch(`${API}/feedback/${sessionId}`, { headers: authHeaders() });
+    if (!res.ok) throw new Error('Not found');
+    const data = await res.json();
+    hideLoading();
+    renderReviewModal(data);
+  } catch(e) {
+    hideLoading();
+    showToast('Could not load session.', 'error');
+  }
+}
+
+function renderReviewModal(data) {
+  const avgScore = data.total_questions > 0 ? (data.total_score / data.total_questions).toFixed(1) : '—';
+  const msgs = data.messages || [];
+  let pairs = '';
+  for (let i = 0; i < msgs.length; i++) {
+    const m = msgs[i];
+    if (m.role === 'ai' && msgs[i+1]?.role === 'user') {
+      const answer = msgs[i+1];
+      pairs += `
+        <div style="margin-bottom:20px;border:1px solid rgba(255,255,255,0.08);border-radius:14px;overflow:hidden;">
+          <div style="background:rgba(99,102,241,0.08);padding:14px 18px;font-size:14px;color:#a5b4fc;font-weight:600;">Q: ${m.content}</div>
+          <div style="padding:14px 18px;font-size:14px;color:#e2e8f0;">A: ${answer.content}</div>
+          ${answer.score != null ? `<div style="padding:8px 18px 14px;display:flex;gap:10px;align-items:center;">
+            <span style="background:rgba(99,102,241,0.15);color:#818cf8;padding:3px 12px;border-radius:99px;font-size:12px;font-weight:700;">Score: ${answer.score}/10</span>
+            <span style="font-size:13px;color:#94a3b8;">${answer.feedback || ''}</span>
+          </div>` : ''}
+        </div>`;
+      i++;
+    }
+  }
+  const overlay = document.createElement('div');
+  overlay.id = 'reviewOverlay';
+  overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(6px);padding:24px;`;
+  overlay.innerHTML = `
+    <div style="background:#0f172a;border:1px solid rgba(255,255,255,0.1);border-radius:20px;width:100%;max-width:680px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,0.6);">
+      <div style="padding:24px 28px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+        <div>
+          <h3 style="font-size:17px;font-weight:700;color:#f8fafc;">${data.interview_type} Interview — ${data.topic || 'General'}</h3>
+          <p style="font-size:13px;color:#94a3b8;margin-top:4px;">${data.total_questions} questions · Avg Score: ${avgScore}/10</p>
+        </div>
+        <button onclick="document.getElementById('reviewOverlay').remove()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#94a3b8;width:34px;height:34px;border-radius:10px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;">✕</button>
+      </div>
+      <div style="padding:24px 28px;overflow-y:auto;flex:1;">${pairs || '<p style="color:#94a3b8;text-align:center;padding:40px;">No messages found.</p>'}</div>
+    </div>`;
+  document.body.appendChild(overlay);
 }
