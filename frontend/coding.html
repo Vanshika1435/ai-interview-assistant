@@ -208,6 +208,18 @@ async function submitSolution() {
     });
     const result = await res.json();
     scores.push(result.score);
+
+// Save score to session
+    if (sessionId) {
+      await fetch(`${API}/interview/answer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+            session_id: sessionId,
+            user_answer: `[Coding Problem: ${currentProblem?.title}]\n\n${code}`
+        })
+      });
+    }
     submitted.push({ problem: currentProblem, code, result });
     renderResult(result);
     updateRunningScore();
