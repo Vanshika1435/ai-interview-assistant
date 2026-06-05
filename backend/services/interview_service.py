@@ -63,14 +63,7 @@ def send_answer(data: MessageRequest, current_user: User, db: Session) -> dict:
 
     last_question = last_ai_message.content if last_ai_message else "General question"
 
-    user_message = Message(
-        session_id=session.id,
-        role="user",
-        content=data.user_answer
-    )
-    db.add(user_message)
-
-    # Pass resume_skills and topic for context-aware evaluation
+    # Evaluate first
     resume_skills = getattr(data, "resume_skills", [])
     evaluation = evaluate_answer(
         last_question,
@@ -80,15 +73,27 @@ def send_answer(data: MessageRequest, current_user: User, db: Session) -> dict:
         resume_skills=resume_skills
     )
 
-    user_message.score = evaluation["score"]
-    user_message.feedback = evaluation["feedback"]
+    # Save user message with score
+    user_message = Message(
+        session_id=session.id,
+        role="user",
+        content=data.user_answer,
+        score=evaluation["score"],
+        feedback=evaluation["feedback"]
+    )
+    db.add(user_message)
 
-    session.total_questions += 1
-    session.total_score = (
-        (session.total_score * (session.total_questions - 1) + evaluation["score"])
-        / session.total_questions
+    # Update session stats directly via query to avoid stale state
+    new_total_questions = (session.total_questions or 0) + 1
+    new_total_score = (
+        ((session.total_score or 0.0) * (new_total_questions - 1) + evaluation["score"])
+        / new_total_questions
     )
 
+    session.total_questions = new_total_questions
+    session.total_score = new_total_score
+
+    # Save next AI question
     next_question = evaluation["next_question"]
     ai_message = Message(
         session_id=session.id,
@@ -97,6 +102,7 @@ def send_answer(data: MessageRequest, current_user: User, db: Session) -> dict:
     )
     db.add(ai_message)
     db.commit()
+    db.refresh(session)
 
     return {
         "score": evaluation["score"],
