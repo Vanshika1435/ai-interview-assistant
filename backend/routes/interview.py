@@ -213,3 +213,40 @@ def get_coding_problem(topic: str = "DSA", level: str = "Medium", db: Session = 
 def evaluate_code(data: dict, db: Session = Depends(get_db), token: str = Depends(get_token)):
     get_current_user(token, db)
     return evaluate_code_submission(data.get("problem_title",""), data.get("code",""), data.get("language","python"), data.get("topic"))
+@router.post("/update-score")
+def update_score(data: dict, db: Session = Depends(get_db), token: str = Depends(get_token)):
+    user = get_current_user(token, db)
+    session = db.query(InterviewSession).filter(
+        InterviewSession.id == data.get("session_id"),
+        InterviewSession.user_id == user.id
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    score = float(data.get("score", 0))
+    problem_title = data.get("problem_title", "Coding Problem")
+    code = data.get("code", "")
+    feedback = data.get("feedback", "")
+
+    # Save user message
+    user_msg = Message(
+        session_id=session.id,
+        role="user",
+        content=f"[{problem_title}]\n\n{code}",
+        score=score,
+        feedback=feedback
+    )
+    db.add(user_msg)
+
+    # Update session stats
+    new_total_questions = (session.total_questions or 0) + 1
+    new_total_score = (
+        ((session.total_score or 0.0) * (new_total_questions - 1) + score)
+        / new_total_questions
+    )
+    session.total_questions = new_total_questions
+    session.total_score = new_total_score
+    db.commit()
+    db.refresh(session)
+
+    return {"success": True, "total_score": round(session.total_score, 2)}

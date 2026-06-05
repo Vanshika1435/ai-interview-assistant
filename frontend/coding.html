@@ -211,12 +211,15 @@ async function submitSolution() {
 
 // Save score to session
     if (sessionId) {
-      await fetch(`${API}/interview/answer`, {
+      await fetch(`${API}/interview/update-score`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
             session_id: sessionId,
-            user_answer: `[Coding Problem: ${currentProblem?.title}]\n\n${code}`
+            score: result.score,
+            problem_title: currentProblem?.title || 'Coding Problem',
+            code: code,
+            feedback: result.feedback
         })
       });
     }
