@@ -97,7 +97,7 @@ def get_stats(
         avg_score = 0.0
 
         if sessions:
-            scores = [s.total_score for s in sessions if s.total_score and s.total_questions and s.total_questions > 0]
+            scores = [s.total_score / s.total_questions for s in sessions if s.total_score and s.total_questions and s.total_questions > 0]
             if scores:
                 avg_score = sum(scores) / len(scores)
 
@@ -188,7 +188,7 @@ def get_sessions(
         for s in sessions:
             avg_score = 0.0
             if s.total_score and s.total_questions and s.total_questions > 0:
-                avg_score = round(s.total_score, 2)
+                avg_score = round(s.total_score / s.total_questions, 2)
 
             result.append({
                 "id": s.id,
