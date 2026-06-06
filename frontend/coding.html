@@ -106,6 +106,7 @@ let currentProblem = null;
 let currentIndex = 0;
 let scores = [];
 let submitted = [];
+let usedTitles = [];
 
 document.getElementById('topbarTitle').textContent = 'Technical Interview';
 document.getElementById('topbarTopic').textContent = `· ${topic}`;
@@ -149,6 +150,14 @@ async function loadNextProblem() {
       headers: { Authorization: `Bearer ${token}` }
     });
     currentProblem = await res.json();
+// Retry if same problem
+    if (usedTitles.includes(currentProblem.title)) {
+      const res2 = await fetch(`${API}/interview/coding-problem?topic=${encodeURIComponent(topic)}&level=${level}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      currentProblem = await res2.json();
+    }
+    usedTitles.push(currentProblem.title);
     renderProblem(currentProblem);
   } catch(e) {
     document.getElementById('problemBody').innerHTML = '<p style="color:#ef4444;padding:20px;">Failed to load problem. Check connection.</p>';

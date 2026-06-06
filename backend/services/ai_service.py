@@ -92,7 +92,7 @@ def generate_first_question(
 def generate_coding_problem(topic: str = None, level: str = "Medium") -> dict:
     t = topic or "DSA"
     prompt = (
-        f"Generate a coding interview problem about {t}, difficulty: {level}.\n"
+        f"Generate a UNIQUE coding interview problem about {t}, difficulty: {level}. Do NOT repeat previously asked problems.\n"
         "Reply in EXACTLY this format:\n"
         "TITLE: <problem title>\n"
         "DIFFICULTY: <Easy/Medium/Hard>\n"
