@@ -38,7 +38,7 @@ def get_feedback(session_id: int, db: Session = Depends(get_db), token: str = De
         "session_id": session.id,
         "interview_type": session.interview_type,
         "topic": session.topic,
-        "total_score": round(session.total_score / session.total_questions, 2) if session.total_questions and session.total_questions > 0 else 0.0,
+        "total_score": round(session.total_score , 2),
         "total_questions": session.total_questions,
         "started_at": session.started_at,
         "ended_at": session.ended_at,

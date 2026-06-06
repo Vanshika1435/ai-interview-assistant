@@ -296,7 +296,7 @@ async function openSessionReview(sessionId) {
 }
 
 function renderReviewModal(data) {
-  const avgScore = data.total_questions > 0 ? (data.total_score / data.total_questions).toFixed(1) : '—';
+  const avgScore = data.total_questions ? data.total_score.toFixed(1) : '—';
   const msgs = data.messages || [];
   let pairs = '';
   for (let i = 0; i < msgs.length; i++) {

@@ -218,6 +218,7 @@ async function submitSolution() {
             session_id: sessionId,
             score: result.score,
             problem_title: currentProblem?.title || 'Coding Problem',
+            problem_description: currentProblem?.description || '',
             code: code,
             feedback: result.feedback
         })
