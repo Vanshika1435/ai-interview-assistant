@@ -43,8 +43,7 @@ def get_admin_stats(email: str, password: str, db: Session = Depends(get_db)):
 
         for s in sessions:
             if s.total_questions and s.total_questions > 0:
-                avg = s.total_score / s.total_questions
-                scores.append(avg)
+                scores.append( s.total_score)
 
         if scores:
             overall_avg = round(sum(scores) / len(scores), 2)
@@ -66,7 +65,7 @@ def get_admin_stats(email: str, password: str, db: Session = Depends(get_db)):
 
         for s in sessions:
             if s.total_questions and s.total_questions > 0:
-                scores.append(s.total_score / s.total_questions)
+                scores.append(s.total_score)
 
         if scores:
             avg_score = round(sum(scores) / len(scores), 2)
