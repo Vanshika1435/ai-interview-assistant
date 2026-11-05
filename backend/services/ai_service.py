@@ -2,7 +2,7 @@ import httpx
 from backend.config import settings
 
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = "llama-3.3-70b-versatile"  # or "llama-3.1-8b-instant" for a faster/cheaper option # Llama 3 on Groq
+GROQ_MODEL = "llama-3.1-70b-versatile"  # or "llama-3.1-8b-instant" for a faster/cheaper option # Llama 3 on Groq
 
 
 def ask_groq(prompt: str) -> str:
