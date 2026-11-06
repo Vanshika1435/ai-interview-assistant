@@ -1,4 +1,4 @@
-const API = 'https://ai-interview-assistant-backend-v5hv.onrender.com'
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://ai-interview-assistant-backend-jy4u.onrender.com";
 const token = localStorage.getItem('token')
 
 if (!token) window.location.href = 'index.html'
