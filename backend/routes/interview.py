@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Header, UploadFile, File
+from fastapi import APIRouter, Depends, Header, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from backend.models.session import InterviewSession
@@ -17,7 +17,6 @@ router = APIRouter(prefix="/interview", tags=["Interview"])
 
 def get_token(authorization: Optional[str] = Header(None)) -> str:
     if not authorization or not authorization.startswith("Bearer "):
-        from fastapi import HTTPException
         raise HTTPException(status_code=401, detail="Token missing")
     return authorization.split(" ")[1]
 
@@ -49,13 +48,16 @@ def history(db: Session = Depends(get_db), token: str = Depends(get_token)):
 @router.post("/speech-to-text")
 async def speech_to_text(
     audio: UploadFile = File(...),
+    db: Session = Depends(get_db),
     token: str = Depends(get_token)
 ):
+    get_current_user(token, db)
     audio_bytes = await audio.read()
-    transcribed_text = transcribe_audio(audio_bytes)
+    if not audio_bytes:
+        raise HTTPException(status_code=400, detail="Empty audio upload")
+    transcribed_text = transcribe_audio(audio_bytes, audio.filename or "audio.webm")
     if transcribed_text.startswith("Transcription error"):
-        from fastapi import HTTPException
-        raise HTTPException(status_code=500, detail=transcribed_text)
+        raise HTTPException(status_code=400, detail=transcribed_text)
     return {"transcribed_text": transcribed_text}
 
 
@@ -68,10 +70,11 @@ async def voice_answer(
 ):
     user = get_current_user(token, db)
     audio_bytes = await audio.read()
-    transcribed_text = transcribe_audio(audio_bytes)
+    if not audio_bytes:
+        raise HTTPException(status_code=400, detail="Empty audio upload")
+    transcribed_text = transcribe_audio(audio_bytes, audio.filename or "audio.webm")
     if transcribed_text.startswith("Transcription error"):
-        from fastapi import HTTPException
-        raise HTTPException(status_code=500, detail=transcribed_text)
+        raise HTTPException(status_code=400, detail=transcribed_text)
     data = MessageRequest(session_id=session_id, user_answer=transcribed_text)
     result = send_answer(data, user, db)
     result["transcribed_text"] = transcribed_text

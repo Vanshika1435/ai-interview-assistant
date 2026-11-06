@@ -1,4 +1,4 @@
-const API = 'https://ai-interview-assistant-backend-v5hv.onrender.com';
+const API = 'https://ai-interview-assistant-backend-jy4u.onrender.com';
 
 // Redirect if already logged in
 if (localStorage.getItem('token')) {
@@ -40,7 +40,8 @@ async function doLogin() {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Login failed');
+    if (!res.ok) throw new Error(formatApiError(data.detail) || 'Login failed');
+    if (!data.access_token) throw new Error('Login succeeded but no token was returned');
     localStorage.setItem('token', data.access_token);
     window.location.href = 'dashboard.html';
   } catch (e) {
@@ -67,14 +68,39 @@ async function doRegister() {
       body: JSON.stringify({ full_name, email, password }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Registration failed');
-    localStorage.setItem('token', data.access_token);
+    if (!res.ok) throw new Error(formatApiError(data.detail) || 'Registration failed');
+
+    // Prefer register token; if older backend still returns UserResponse, login next
+    let token = data.access_token;
+    if (!token) {
+      const loginRes = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const loginData = await loginRes.json();
+      if (!loginRes.ok || !loginData.access_token) {
+        throw new Error('Account created. Please login.');
+      }
+      token = loginData.access_token;
+    }
+
+    localStorage.setItem('token', token);
     window.location.href = 'dashboard.html';
   } catch (e) {
     showError(e.message);
     document.getElementById('registerBtn').disabled = false;
     document.getElementById('registerBtn').textContent = 'Create Account';
   }
+}
+
+function formatApiError(detail) {
+  if (!detail) return '';
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    return detail.map(d => d.msg || JSON.stringify(d)).join('; ');
+  }
+  return String(detail);
 }
 
 // Enter key support

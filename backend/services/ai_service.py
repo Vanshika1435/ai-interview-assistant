@@ -16,7 +16,7 @@ def ask_groq(prompt: str) -> str:
             json={
                 "model": GROQ_MODEL,
                 "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": 500,
+                "max_tokens": 800,
                 "temperature": 0.7,
             },
             timeout=30.0,
@@ -84,10 +84,10 @@ def generate_first_question(
             "The question should test deep understanding, not just definitions. "
             "Output ONLY the question. No intro, no explanation, no extra text."
         )
-    return ask_groq(prompt)
-    if result in ("AI_ERRORS", "AI_TIMEOUT") or not result.strip():
+    result = ask_groq(prompt)
+    if result in ("AI_ERRORS", "AI_TIMEOUT") or not str(result).strip():
         return _default_first_question(interview_type, topic)
-    return result 
+    return result
 
 def generate_coding_problem(topic: str = None, level: str = "Medium") -> dict:
     t = topic or "DSA"

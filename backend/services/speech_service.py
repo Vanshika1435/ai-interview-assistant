@@ -11,17 +11,19 @@ def get_model():
     return model
 
 
-def transcribe_audio(audio_bytes: bytes, filename: str = "audio.wav") -> str:
+def transcribe_audio(audio_bytes: bytes, filename: str = "audio.webm") -> str:
     try:
         m = get_model()
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+        _, ext = os.path.splitext(filename or "")
+        suffix = ext if ext else ".webm"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             tmp.write(audio_bytes)
             tmp_path = tmp.name
 
         segments, _ = m.transcribe(tmp_path, language="en")
         text = " ".join([seg.text for seg in segments]).strip()
         os.unlink(tmp_path)
-        return text
+        return text or ""
 
     except Exception as e:
         return f"Transcription error: {str(e)}"

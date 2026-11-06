@@ -4,14 +4,19 @@ from backend.models.user import User
 from jose import JWTError
 from backend.database import get_db
 from backend.schemas.user import RegisterRequest, LoginRequest, TokenResponse, UserResponse
-from backend.services.auth_service import register_user, login_user,decode_access_token
+from backend.services.auth_service import register_user, login_user, decode_access_token, create_token
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-@router.post("/register", response_model=UserResponse)
+@router.post("/register", response_model=TokenResponse)
 def register(data: RegisterRequest, db: Session = Depends(get_db)):
     user = register_user(data, db)
-    return user
+    token = create_token(user)
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": user,
+    }
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -52,9 +57,11 @@ def get_current_user_data(
             "email": user.email
         }
 
+    except HTTPException:
+        # Preserve 401/404 from decode_access_token / lookups
+        raise
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
-
     except Exception as e:
         print("AUTH ERROR:", e)
         raise HTTPException(status_code=500, detail=str(e))

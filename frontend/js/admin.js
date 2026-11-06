@@ -1,4 +1,4 @@
-const API = 'https://ai-interview-assistant-backend-v5hv.onrender.com';
+const API = 'https://ai-interview-assistant-backend-jy4u.onrender.com';
 let adminCreds = null;
 
 document.addEventListener('DOMContentLoaded', () => {

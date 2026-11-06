@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://ai-interview-assistant-backend-jy4u.onrender.com";
+const API = 'https://ai-interview-assistant-backend-jy4u.onrender.com';
 const token = localStorage.getItem('token')
 
 if (!token) window.location.href = 'index.html'
@@ -136,11 +136,12 @@ async function sendAnswer() {
         }
 
         questionCount++
-        currentScore = data.total_score
-        document.getElementById('current-score').textContent = currentScore.toFixed(1)
+        currentScore = Number(data.total_score) || 0
+        const scoreEl = document.getElementById('current-score')
+        if (scoreEl) scoreEl.textContent = currentScore.toFixed(1)
 
-        addFeedback(data.score, data.feedback)
-        addMessage('ai', data.next_question)
+        addFeedback(data.score ?? 0, data.feedback || '')
+        if (data.next_question) addMessage('ai', data.next_question)
 
     } catch (err) {
         removeTyping()
@@ -184,7 +185,10 @@ async function toggleVoice() {
 async function startRecording() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        mediaRecorder = new MediaRecorder(stream)
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm')
+            ? 'audio/webm'
+            : (MediaRecorder.isTypeSupported('audio/ogg') ? 'audio/ogg' : '')
+        mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
         audioChunks = []
 
         mediaRecorder.ondataavailable = e => audioChunks.push(e.data)
@@ -214,9 +218,11 @@ function stopRecording() {
 }
 
 async function processVoiceToText() {
-    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' })
+    const mime = (mediaRecorder && mediaRecorder.mimeType) ? mediaRecorder.mimeType.split(';')[0] : 'audio/webm'
+    const ext = mime.includes('ogg') ? 'ogg' : (mime.includes('wav') ? 'wav' : 'webm')
+    const audioBlob = new Blob(audioChunks, { type: mime })
     const formData = new FormData()
-    formData.append('audio', audioBlob, 'answer.wav')
+    formData.append('audio', audioBlob, `answer.${ext}`)
 
     showTyping()
 
@@ -252,7 +258,7 @@ function showCompletionModal(questions, score) {
         <p style="color:#94a3b8;margin-bottom:28px;font-size:15px;">Great effort! Here's your summary.</p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px;">
           <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:18px;">
-            <div style="font-size:28px;font-weight:800;color:#34d399;">${score.toFixed(1)}</div>
+            <div style="font-size:28px;font-weight:800;color:#34d399;">${Number(score || 0).toFixed(1)}</div>
             <div style="font-size:12px;color:#94a3b8;margin-top:4px;">Final Score /10</div>
           </div>
           <div style="background:rgba(255,255,255,0.05);border-radius:14px;padding:18px;">
