@@ -7,7 +7,7 @@ model = None
 def get_model():
     global model
     if model is None:
-        model = WhisperModel("tiny", device="cpu", compute_type="int8")
+        model = WhisperModel("tiny", device="cpu", compute_type="int8", cpu_threads=1, num_workers=1)
     return model
 
 
