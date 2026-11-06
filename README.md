@@ -1,108 +1,160 @@
-# 🤖 AI Interview Assistant (A.I.I.A)
+# AI Interview Assistant
 
-An intelligent interview preparation platform that simulates real HR and Technical interviews using AI. Built as an internship project.
+An AI-powered interview preparation platform designed to simulate HR and technical interviews, evaluate candidate responses, and provide actionable feedback. The application combines a web-based interface with an AI-powered backend to create an interactive interview practice experience.
 
----
+## Overview
 
-## ✨ Features
+AI Interview Assistant helps candidates prepare for interviews through structured interview sessions, AI-generated questions, answer evaluation, and performance tracking.
 
-- 🎯 **HR & Technical Interview Modes** — Behavioral questions + topic-specific technical rounds
-- 🧠 **AI-Powered Evaluation** — Real-time scoring (1–10) and feedback on every answer
-- 📄 **Resume Analysis** — Upload your PDF resume; AI extracts skills, experience level, and suggests interview topics
-- 🎤 **Voice Input** — Record your answer, get it transcribed, edit if needed, then send
-- 📊 **Performance Dashboard** — Track total interviews, average score, questions answered
-- 🕓 **Interview History** — Review all past sessions with scores
-- 🌓 **Dark / Light Theme** — Toggle anytime
-- 🔐 **JWT Authentication** — Secure register/login flow
+Users can practice behavioral and technical interviews, submit answers through text or voice, analyze their resumes, and review feedback to identify areas for improvement.
 
----
+## Features
 
-## 🛠️ Tech Stack
+- **HR and Technical Interview Modes:** Practice behavioral interviews and topic-specific technical interviews.
+- **AI-Powered Question Generation:** Generate interview questions based on the selected interview type, technical topic, and extracted resume skills.
+- **Answer Evaluation:** Receive AI-generated scores on a scale of 1–10, feedback, and relevant follow-up questions.
+- **Voice-Based Responses:** Record spoken answers and convert audio into text using speech recognition.
+- **Resume Analysis:** Upload a PDF resume to extract skills, identify experience level, and receive suggested interview topics and improvement areas.
+- **Coding Practice:** Generate coding problems and receive AI-assisted evaluation of submitted solutions, including complexity and improvement suggestions.
+- **Performance Dashboard:** View interview statistics and performance information.
+- **Interview History:** Review previous interview sessions and their results.
+- **User Authentication:** Registration and login functionality using JWT-based authentication.
+- **Admin Interface:** Dedicated administrative interface.
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | HTML, CSS, Vanilla JavaScript |
-| Backend | FastAPI (Python) |
-| Database | PostgreSQL + SQLAlchemy |
-| AI Model | Ollama + Llama 3 (local) |
-| Speech-to-Text | faster-whisper |
-| Auth | JWT (python-jose) |
+## Technology Stack
 
----
+| Component | Technologies |
+|---|---|
+| Frontend | HTML, CSS, JavaScript |
+| Backend | Python, FastAPI |
+| AI Integration | Groq API |
+| AI Model | OpenAI GPT-OSS 120B (through Groq) |
+| Database | PostgreSQL |
+| ORM | SQLAlchemy |
+| Authentication | JWT, Python-JOSE, bcrypt |
+| Speech Recognition | faster-whisper |
+| Resume Processing | PyPDF2 |
+| API Communication | HTTPX |
+| Deployment | Vercel, Render |
 
-## 📁 Folder Structure
+## System Architecture
 
+The application follows a client-server architecture with a separate frontend and backend.
+
+```text
+                 User
+                  |
+                  v
+          Frontend Application
+          HTML / CSS / JavaScript
+                  |
+                  v
+             FastAPI Backend
+                  |
+       +----------+-----------+
+       |          |           |
+       v          v           v
+ Authentication  Interview   Resume
+    Routes        Routes     Routes
+       |          |           |
+       +----------+-----------+
+                  |
+                  v
+             Service Layer
+       +----------+-----------+
+       |          |           |
+       v          v           v
+    AI Service  Speech     Database
+       |        Service    (PostgreSQL)
+       |
+       v
+    Groq API
+       |
+       v
+ AI-Generated Questions,
+ Evaluation and Feedback
 ```
+
+## Interview Workflow
+
+1. The user registers or logs into the application.
+2. The user selects an interview type, such as HR or Technical.
+3. For technical interviews, a relevant topic can be selected.
+4. The backend generates an interview question using the Groq API.
+5. The user submits an answer through text or voice input.
+6. For voice responses, the audio is transcribed into text using faster-whisper.
+7. The answer is sent to the AI evaluation service.
+8. The system generates a score, feedback, and a follow-up question.
+9. Interview information and performance data are stored for tracking and review.
+
+## Resume Analysis Workflow
+
+1. The user uploads a PDF resume.
+2. PyPDF2 extracts the text from the document.
+3. The extracted information is passed to the AI service.
+4. The AI analyzes skills, experience level, suggested interview topics, strengths, and improvement areas.
+5. The results help personalize the interview preparation process.
+
+## Project Structure
+
+```text
 ai-interview-assistant/
+│
 ├── backend/
-│   ├── main.py               # FastAPI app entry point
-│   ├── config.py             # Environment settings
-│   ├── database.py           # DB engine & session
+│   ├── main.py
+│   ├── config.py
+│   ├── database.py
 │   ├── models/
-│   │   ├── user.py
-│   │   ├── session.py
-│   │   └── message.py
 │   ├── schemas/
-│   │   ├── user.py
-│   │   └── interview.py
 │   ├── routes/
-│   │   ├── auth.py
-│   │   ├── interview.py
-│   │   ├── feedback.py
-│   │   ├── resume.py
-│   │   └── admin.py
 │   └── services/
 │       ├── ai_service.py
 │       ├── auth_service.py
 │       ├── speech_service.py
 │       └── interview_service.py
+│
 ├── frontend/
-│   ├── index.html            # Login / Register
-│   ├── dashboard.html        # Main dashboard
-│   ├── interview.html        # Chat interface
-│   ├── landing.html          # Landing page
-│   ├── admin.html            # Admin panel
+│   ├── index.html
+│   ├── landing.html
+│   ├── dashboard.html
+│   ├── interview.html
+│   ├── coding.html
+│   ├── admin.html
 │   ├── css/
-│   │   └── style.css
 │   └── js/
-│       ├── auth.js
-│       ├── dashboard.js
-│       ├── interview.js
-│       └── admin.js
-├── uploads/                  # Resume PDFs stored here
-├── .env                      # Environment variables (not committed)
-├── .gitignore
+│
 ├── requirements.txt
+├── Dockerfile
+├── .gitignore
 └── README.md
 ```
 
----
-
-## ⚙️ Local Setup
+## Local Setup
 
 ### Prerequisites
+
 - Python 3.10+
 - PostgreSQL
-- [Ollama](https://ollama.ai) installed and running
-- Llama 3 model pulled
+- Groq API key
+- Git
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ai-interview-assistant.git
+git clone https://github.com/Vanshika1435/ai-interview-assistant.git
 cd ai-interview-assistant
 ```
 
-### 2. Create virtual environment
+### 2. Create and activate a virtual environment
 
 ```bash
 python -m venv venv
+```
 
-# Windows
+Windows:
+
+```powershell
 venv\Scripts\activate
-
-# Mac/Linux
-source venv/bin/activate
 ```
 
 ### 3. Install dependencies
@@ -111,101 +163,87 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Set up environment variables
+### 4. Configure environment variables
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the project root and configure:
 
 ```env
-DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/interview_db
-SECRET_KEY=your-super-secret-key-change-this
+DATABASE_URL=postgresql://username:password@localhost:5432/interview_db
+
+SECRET_KEY=your_secret_key
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
-OLLAMA_BASE_URL=http://localhost:11434
+
+GROQ_API_KEY=your_groq_api_key
 ```
 
-### 5. Set up PostgreSQL database
+Replace the placeholder values with your own configuration. Never commit API keys or credentials to GitHub.
 
-```sql
-CREATE DATABASE interview_db;
-```
+### 5. Create the PostgreSQL database
 
-### 6. Pull the AI model
+Create a database named `interview_db` or update `DATABASE_URL` to match your database configuration.
 
-```bash
-ollama pull llama3
-```
-
-### 7. Run the backend
+### 6. Start the backend
 
 ```bash
 uvicorn backend.main:app --reload
 ```
 
-API will be live at: `https://ai-interview-assistant-backend-v5hv.onrender.com`  
-Swagger docs at: `https://ai-interview-assistant-backend-v5hv.onrender.com`
+The backend will be available at:
 
-### 8. Open the frontend
-
-Just open `frontend/index.html` in your browser, or use Live Server in VS Code.
-
----
-
-## 🔑 Admin Panel
-
-Access at `frontend/admin.html`
-
-Default credentials:
-```
-Email:    admin@interview.ai
-Password: admin123
+```text
+http://127.0.0.1:8000
 ```
 
----
+Interactive API documentation:
 
-## 📦 Requirements
-
-```
-fastapi
-uvicorn
-sqlalchemy
-psycopg2-binary
-python-jose[cryptography]
-passlib[bcrypt]==4.0.1
-python-multipart
-pydantic
-pydantic-settings
-python-dotenv
-httpx
-pydantic[email]
-faster-whisper
-PyPDF2
+```text
+http://127.0.0.1:8000/docs
 ```
 
+### 7. Run the frontend
+
+Open the frontend entry page using a local development server, such as VS Code Live Server.
+
+Ensure the frontend API configuration points to your running backend.
+
+## Deployment
+
+| Component | Platform |
+|---|---|
+| Frontend | Vercel |
+| Backend | Render |
+| AI Inference | Groq API |
+| Database | PostgreSQL |
+
+**Live Application:** https://ai-interview-assistant-wine.vercel.app/
+
+**Backend API:** https://ai-interview-assistant-backend-jy4u.onrender.com
+
+**API Documentation:** https://ai-interview-assistant-backend-jy4u.onrender.com/docs
+
+The deployed backend exposes its FastAPI documentation. Full application functionality depends on valid database connectivity and the required deployment environment variables.
+
+## Key Learning Outcomes
+
+- Building REST APIs using FastAPI.
+- Integrating external LLM APIs into an application.
+- Designing a structured interview workflow.
+- Working with PostgreSQL and SQLAlchemy.
+- Implementing JWT-based authentication.
+- Processing voice input using speech recognition.
+- Extracting and analyzing resume information.
+- Connecting and deploying separate frontend and backend services.
+
+## Future Improvements
+
+- More detailed interview performance analytics.
+- Expanded coding evaluation and test-case support.
+- More personalized interview recommendations.
+- Enhanced speech interaction and feedback.
+
 ---
 
-## 🚀 API Endpoints
+**Author:** Vanshika Sharma
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/auth/register` | Register new user |
-| POST | `/auth/login` | Login and get JWT token |
-| GET | `/auth/me` | Get current user info |
-| POST | `/interview/start` | Start a new interview session |
-| POST | `/interview/answer` | Submit an answer |
-| POST | `/interview/end/{id}` | End interview session |
-| GET | `/interview/sessions` | Get all sessions |
-| GET | `/interview/stats` | Get performance stats |
-| POST | `/resume/upload` | Upload and analyze resume PDF |
-| GET | `/feedback/{session_id}` | Get detailed session feedback |
-
----
-
-## 👨‍💻 Author
-
-Built with ❤️ as an internship project.
-
----
-
-## 📄 License
-
-MIT License
+**Repository:** https://github.com/Vanshika1435/ai-interview-assistant
