@@ -10,10 +10,16 @@ app = FastAPI(title="AI Interview Assistant", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://ai-interview-assistant-wine.vercel.app"],
+    allow_origins=[
+        "https://ai-interview-assistant-wine.vercel.app",
+        "https://ai-interview-assistant.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:5173",
+    ],
+    allow_origin_regex=r"https://ai-interview-assistant-.*\.vercel\.app",
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With", "Accept"],
 )
 
 app.include_router(auth.router)
